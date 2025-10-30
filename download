@@ -1,0 +1,25 @@
+# --- Wuthering Waves Gacha Log Acquisition Script---
+# Auther: xingjian
+# Github: https://github.com/timetetng/ww-script
+# Thanks for using my script! May you win your 50/50s!
+
+$mainScriptUrl = "https://file.leewater.online/f/Eji2/ww-gacha-log.ps1"
+
+# This message is ASCII, so it will display correctly everywhere.
+Write-Host "Downloading ..."
+
+try {
+    # Use the .NET WebClient which allows us to control encoding
+    $webClient = New-Object System.Net.WebClient
+
+    # 1. Download the raw bytes (prevents irm's bad decoding)
+    $bytes = $webClient.DownloadData($mainScriptUrl)
+
+    # 2. Decode the bytes manually using UTF-8
+    $scriptContent = [System.Text.Encoding]::UTF8.GetString($bytes)
+
+    # 3. Execute the correctly-decoded script content
+    Invoke-Expression $scriptContent
+} catch {
+    Write-Error "Failed to download or execute the script. Error: $_"
+}

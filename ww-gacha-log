@@ -1,0 +1,215 @@
+<#
+.SYNOPSIS
+    在全盘自动递归查找《鸣潮》的 Client 目录，
+    并精确提取最新的抽卡链接 (URL)。
+.DESCRIPTION
+    此脚本用于在 Windows 电脑上自动获取《鸣潮》的抽卡链接。
+    作者: 行简
+    Github: https://github.com/timetetng/ww-script
+    执行流程:
+    1. 自动递归扫描所有盘符根目录下的关键词文件夹 (wutheringwaves, 鸣潮等)。
+    2. 深入查找，直到找到 "Client\Saved\Logs\Client.log" 文件。
+    3. 一旦找到第一个有效链接，立即停止所有后续扫描，保持输出干净。
+    4. 使用正则表达式精确提取 "url" 字段的值。
+    5. 如果自动查找失败，会进入交互模式，提示用户手动输入路径。
+    6. 如果日志中无链接，会提示用户先打开游戏抽卡记录。
+
+    如果执行失败，请确保:
+    - 游戏已安装且至少启动过一次。
+    - 游戏已登录并打开抽卡记录，翻看多页以确保日志中
+    - 使用管理员权限运行 PowerShell 以确保访问所有目录。
+    - 直接curl -L <脚本链接> 
+#>
+
+# 1. --- 定义 ---
+# 用于查找游戏目录的正则表达式 (不区分大小写)
+$keywordRegex = '(wutheringwaves|wuthering waves|鸣潮)'
+# 用于在日志中查找链接的关键词
+$urlKeyword = 'aki-gm-resources.aki-game'
+# 用于精确提取URL的正则表达式
+$urlExtractRegex = '"url":"(https?://[^"]+)"'
+
+# 2. --- 全局状态变量 ---
+$global:allFoundUrls = [System.Collections.Generic.List[string]]@()
+$global:stopSearch = $false         # 停止标志
+$global:clientDirFound = $false      # 标记是否找到了Client目录
+$global:logFoundButNoUrl = $false    # 标记是否日志中无URL
+
+# 3. --- 递归函数定义 ---
+function Find-Client-Recursive {
+    param (
+        [string]$CurrentPath
+    )
+
+    # 如果已在其他分支找到，立即停止
+    if ($global:stopSearch) { return }
+
+    Write-Host "正在检索: $CurrentPath"
+    
+    try {
+        # --- 停止条件: 检查 "Client" 目录 ---
+        $clientDir = Get-ChildItem -Path $CurrentPath -Directory -Filter "Client" -ErrorAction SilentlyContinue | Select-Object -First 1
+        
+        if ($null -ne $clientDir) {
+            # 找到了 "Client" 目录。现在验证它是否包含日志文件。
+            $logPath = Join-Path -Path $clientDir.FullName -ChildPath "Saved\Logs\Client.log"
+            
+            if (Test-Path -Path $logPath -PathType Leaf) {
+                # --- 验证成功 ---
+                $global:clientDirFound = $true
+                Write-Host "[成功] 找到 'Client' 目录: $($clientDir.FullName)" -ForegroundColor Green
+                
+                # 提取URL
+                Write-Host "        ... 正在读取日志文件提取链接..."
+                $match = Select-String -Path $logPath -Pattern $urlKeyword -SimpleMatch -ErrorAction SilentlyContinue | Select-Object -Last 1
+                
+                if ($match) {
+                    # 提取URL
+                    if ($match.Line -match $urlExtractRegex) {
+                        $url = $matches[1] # [1] 是第一个捕获组 (https://...)
+			Set-Clipboard -Value $url
+                        Write-Host "================= 找到抽卡链接 =================" -ForegroundColor Cyan
+                        Write-Host $url
+                        Write-Host "==============================================="
+			Write-Host "抽卡链接已复制到剪贴板"
+                        $global:allFoundUrls.Add($url)
+                        $global:stopSearch = $true # 成功，设置停止标志
+                    } else {
+                        Write-Warning "... 找到关键词行，但无法用Regex提取 'url' 字段。"
+                    }
+                } else {
+                    # 找到日志，但没找到关键词
+                    $global:logFoundButNoUrl = $true
+                }
+                
+                # 无论是否提取成功，都停止这个分支的深入 (因为已找到Client)
+                return
+            }
+        }
+
+        # --- 递归步骤: 如果未找到 "Client"，则继续深入 ---
+        if (-not $global:stopSearch) {
+            # 查找所有 *匹配关键词* 的子目录
+            $subDirs = Get-ChildItem -Path $CurrentPath -Directory -ErrorAction SilentlyContinue | 
+                            Where-Object { $_.Name -match $keywordRegex }
+            
+            if ($null -ne $subDirs) {
+                foreach ($subDir in $subDirs) {
+                    # 递归调用
+                    Find-Client-Recursive -CurrentPath $subDir.FullName
+                    # 检查子调用是否已设置停止标志
+                    if ($global:stopSearch) { return }
+                }
+            }
+        }
+        
+    } catch {
+        Write-Warning "检索 $CurrentPath 时出错: $($_.Exception.Message)"
+    }
+}
+
+# 4. --- 手动模式函数  ---
+function Invoke-Manual-Mode {
+    Write-Host "--- 切换到手动模式 ---" -ForegroundColor Cyan
+    $manualPath = Read-Host "(请输入 'Client' 文件夹和 'Wuthering Waves.exe' 所在目录，你可以在启动器的 设置-游戏-游戏安装目录 处找到)"
+
+    if (-not [string]::IsNullOrWhiteSpace($manualPath) -and (Test-Path -Path $manualPath -PathType Container)) {
+        
+        # 尝试两种可能的用户输入：
+        # 1. 用户输入了 "Wuthering Waves Game" 目录
+        # 2. 用户输入了 "Client" 目录
+        $logPathsToTry = @(
+            (Join-Path -Path $manualPath -ChildPath "Client\Saved\Logs\Client.log"),
+            (Join-Path -Path $manualPath -ChildPath "Saved\Logs\Client.log")
+        )
+
+        $manualLogPath = $null
+        foreach ($path in $logPathsToTry) {
+            if (Test-Path -Path $path -PathType Leaf) {
+                $manualLogPath = $path
+                break
+            }
+        }
+
+        if ($manualLogPath) {
+            Write-Host "[+] 成功在 $manualLogPath 找到日志文件。" -ForegroundColor Green
+            # --- 重复提取逻辑 ---
+            $match = Select-String -Path $manualLogPath -Pattern $urlKeyword -SimpleMatch -ErrorAction SilentlyContinue | Select-Object -Last 1
+            if ($match -and ($match.Line -match $urlExtractRegex)) {
+                $url = $matches[1]
+                Write-Host "================= 找到抽卡链接 =================" -ForegroundColor Cyan
+                Write-Host $url
+                Write-Host "==============================================="
+                $global:allFoundUrls.Add($url)
+            } else {
+                # 如果手动模式也失败了，提示 Case 2
+                Write-Warning "[!] 找到日志，但未找到链接。"
+                Write-Host "请确保启动游戏，并打开抽卡记录，多翻看几页后重新运行脚本。" -ForegroundColor Cyan
+            }
+            # --- 结束提取逻辑 ---
+        } else {
+            Write-Error "[!] 在您输入的目录中未找到 'Client\Saved\Logs\Client.log' 或 'Saved\Logs\Client.log'。"
+        }
+    } else {
+        Write-Warning "输入无效或已取消。"
+    }
+}
+
+# 5. --- 主脚本执行 ---
+Write-Host "开始递归查找《鸣潮》Client 目录..." -ForegroundColor Green
+Write-Host "匹配关键词: $keywordRegex"
+
+$drives = Get-PSDrive -PSProvider FileSystem
+
+foreach ($drive in $drives) {
+    # 检查停止标志
+    if ($global:stopSearch) { break }
+    
+    $rootDir = $drive.Root
+     
+    try {
+        $potentialBaseDirs = Get-ChildItem -Path $rootDir -Directory -ErrorAction Stop | 
+                                Where-Object { $_.Name -match $keywordRegex }
+
+        if ($potentialBaseDirs) {
+            foreach ($baseDir in $potentialBaseDirs) {
+                # 检查停止标志
+                if ($global:stopSearch) { break }
+                
+                Write-Host "找到游戏根目录，开始深入扫描: $($baseDir.FullName)"
+                Find-Client-Recursive -CurrentPath $baseDir.FullName
+            }
+        } else {
+        }
+    } catch {
+        Write-Warning "无法访问 $($rootDir): $($_.Exception.Message)"
+    }
+}
+
+# 6. --- 最终报告 ---
+if ($global:allFoundUrls.Count -gt 0) {
+    # 成功
+    Write-Host "--- 脚本执行完毕 ---" -ForegroundColor Green
+    Write-Host "共找到 $($global:allFoundUrls.Count) 个有效链接"
+
+} elseif ($global:clientDirFound -and $global:logFoundButNoUrl) {
+    # 失败1
+    Write-Host "--- 脚本执行完毕 ---" -ForegroundColor Yellow
+    Write-Warning "已找到 Client 目录和日志文件，但未能在日志中找到抽卡记录。"
+    Write-Host "请确保启动游戏，并打开抽卡记录，多翻看几页后重新运行脚本。" -ForegroundColor Cyan
+
+} else {
+    # 失败2
+    Write-Host "--- 扫描完成 ---"
+    Write-Warning "自动递归查找失败，可能是用户安装目录不是标准路径和文件夹名。"
+    Invoke-Manual-Mode # 启动手动模式
+    
+    # 手动模式后的最终检查
+    if ($global:allFoundUrls.Count -eq 0) {
+        Write-Host "--- 脚本执行完毕 ---"
+        Write-Warning "手动模式也未能提取链接。"
+    } else {
+        Write-Host "--- 脚本执行完毕 ---" -ForegroundColor Green
+        Write-Host "已通过手动模式成功提取链接。"
+    }
+}
