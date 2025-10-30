@@ -35,8 +35,15 @@
             padding-bottom: 10px;
             font-size: 1.8em;
         }
+        
+        h2 {
+            color: #2c3e50;
+            border-bottom: 1px solid #ecf0f1;
+            padding-bottom: 8px;
+            margin-top: 25px;
+        }
 
-        p {
+        p, li {
             font-size: 1.1em;
             margin: 15px 0;
         }
@@ -65,6 +72,62 @@
             font-weight: bold;
             word-break: break-all; /* 确保长链接能换行 */
         }
+        
+        /* 列表样式 */
+        ol {
+            padding-left: 25px;
+        }
+
+        /* --- 新增：代码块样式 --- */
+
+        /* 代码块容器 */
+        .code-block-container {
+            position: relative;
+            background-color: #2d2d2d; /* 深色背景 */
+            color: #f1f1f1;
+            padding: 15px 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            overflow-x: auto; /* 保证代码不溢出 */
+        }
+
+        /* <pre> 和 <code> 样式 */
+        .code-block-container pre {
+            margin: 0;
+            padding: 0;
+            white-space: pre; /* 保持格式 */
+        }
+        
+        .code-block-container code {
+            font-family: "Courier New", Courier, monospace;
+            font-size: 1.05em;
+            padding-right: 60px; /* 为复制按钮留出空间 */
+        }
+
+        /* 复制按钮 */
+        .copy-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background-color: #555;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            opacity: 0.7;
+            transition: opacity 0.3s, background-color 0.3s;
+        }
+
+        .copy-btn:hover {
+            background-color: #666;
+            opacity: 1;
+        }
+        
+        .copy-btn:active {
+            background-color: #777;
+        }
     </style>
 </head>
 <body>
@@ -81,13 +144,63 @@
         <hr>
 
         <section id="zh-CN">
-            <h1>大家好！欢迎来到这里。</h1>
+            <h1>您好！欢迎来到这里。</h1>
             <p>您应该访问 <strong><a href="/main">/main 路径</a></strong>，而不是这个根路径。</p>
-            <p>别担心，您可以直接访问我的仓库，而不是在这里停留。</p>
+            <p>别担心，您可以直接访问我的仓库获取代码。</p>
             <p class="repo-link">我的 GitHub 仓库：<a href="https://github.com/timetetng/ww-script" target="_blank" rel="noopener noreferrer">https://github.com/timetetng/ww-script</a></p>
             <p>祝您有美好的一天！:)</p>
         </section>
+
+        <hr>
+        
+        <section id="script-instructions">
+            <h2>鸣潮抽卡记录获取脚本</h2>
+            <h3>(Wuthering Waves Gacha Log Script)</h3>
+
+            <p><strong>如何使用 (How to use):</strong></p>
+            <ol>
+                <li><strong>Win + S</strong> 打开 Windows 搜索栏，搜索 <strong>PowerShell</strong>。</li>
+                <li>右键点击，选择“<strong>以管理员身份打开</strong>”。</li>
+                <li>粘贴以下命令并回车执行：</li>
+            </ol>
+            
+            <div class="code-block-container">
+                <pre><code>irm ww.lsgbin.com/main | iex</code></pre>
+                <button class="copy-btn" onclick="copyToClipboard(this)">复制</button>
+            </div>
+
+            <p><strong>提示：</strong>访问失败可能是网络问题。您也可以直接下载本仓库的 <code>ww-gacha-log</code> 文件，修改后缀为 <code>.ps1</code> 后，在 PowerShell 中运行 (<code>.\ww-gacha-log.ps1</code>)。</p>
+        </section>
+
     </div>
+
+    <script>
+        function copyToClipboard(buttonElement) {
+            // 找到按钮的父元素 (.code-block-container)
+            const container = buttonElement.parentElement;
+            // 找到容器内的 <code> 元素
+            const code = container.querySelector('code');
+            const textToCopy = code.innerText;
+
+            // 使用 Clipboard API 复制
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                // 复制成功后的反馈
+                const originalText = buttonElement.innerText;
+                buttonElement.innerText = "已复制!";
+                
+                // 2秒后恢复按钮文本
+                setTimeout(() => {
+                    buttonElement.innerText = originalText;
+                }, 2000);
+            }).catch(err => {
+                console.error('无法复制到剪贴板: ', err);
+                buttonElement.innerText = "失败";
+                setTimeout(() => {
+                    buttonElement.innerText = "复制";
+                }, 2000);
+            });
+        }
+    </script>
 
 </body>
 </html>
