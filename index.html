@@ -3,27 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>欢迎访问 WW 脚本</title>
+    <title>Welcome / 欢迎</title>
+    <style>
+        /* 基础样式 */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 90vh;
+        }
+
+        /* 内容容器 */
+        .container {
+            max-width: 700px;
+            margin: 20px;
+            padding: 25px 40px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 10px;
+            font-size: 1.8em;
+        }
+
+        p {
+            font-size: 1.1em;
+            margin: 15px 0;
+        }
+
+        /* 链接样式 */
+        a {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* 分隔线 */
+        hr {
+            border: 0;
+            height: 1px;
+            background: #e0e0e0;
+            margin: 30px 0;
+        }
+
+        /* GitHub 仓库链接加粗 */
+        .repo-link a {
+            font-weight: bold;
+            word-break: break-all; /* 确保长链接能换行 */
+        }
+    </style>
 </head>
 <body>
-    <h1>欢迎来到我的脚本！</h1>
-    <hr>
-    
-    <p>👋 **Hello guys! Welcome to my script.**</p>
-    
-    <h2>重要提示：</h2>
-    
-    <p>您应该访问 **<code>/main</code>** 路由而不是根路由 (<code>/</code>)。</p>
-    
-    <h2>直接访问仓库：</h2>
-    
-    <p>不用担心，您可以直接访问我的 GitHub 仓库查看代码和更多信息。</p>
-    <p>
-        **我的 GitHub 仓库:** <a href="https://github.com/timetetng/ww-script">https://github.com/timetetng/ww-script</a>
-    </p>
-    
-    <hr>
-    
-    <p>✨ **Have a nice day! :)**</p>
+
+    <div class="container">
+        <section id="en">
+            <h1>Hello guys! Welcome to here.</h1>
+            <p>You should visit the <strong><a href="/main">/main route</a></strong> instead of the root route.</p>
+            <p>Don’t worry guys, you can directly visit my repository instead of looking here.</p>
+            <p class="repo-link">My GitHub repository: <a href="https://github.com/timetetng/ww-script" target="_blank" rel="noopener noreferrer">https://github.com/timetetng/ww-script</a></p>
+            <p>Have a nice day! :)</p>
+        </section>
+
+        <hr>
+
+        <section id="zh-CN">
+            <h1>大家好！欢迎来到这里。</h1>
+            <p>您应该访问 <strong><a href="/main">/main 路径</a></strong>，而不是这个根路径。</p>
+            <p>别担心，您可以直接访问我的仓库，而不是在这里停留。</p>
+            <p class="repo-link">我的 GitHub 仓库：<a href="https://github.com/timetetng/ww-script" target="_blank" rel="noopener noreferrer">https://github.com/timetetng/ww-script</a></p>
+            <p>祝您有美好的一天！:)</p>
+        </section>
+    </div>
+
 </body>
 </html>
