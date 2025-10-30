@@ -3,7 +3,7 @@
 # Github: https://github.com/timetetng/ww-script
 # Thanks for using my script! May you win your 50/50s!
 
-$mainScriptUrl = "https://file.leewater.online/f/Eji2/ww-gacha-log.ps1"
+$mainScriptUrl = "https://raw.githubusercontent.com/timetetng/ww-script/main/ww-gacha-log"
 
 # This message is ASCII, so it will display correctly everywhere.
 Write-Host "Downloading ..."
